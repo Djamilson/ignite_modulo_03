@@ -44,16 +44,18 @@ export default function Posts({ posts }: PostsProps) {
 }
 
 export const getStaticProps: GetStaticProps = async () => {
+
   const prismic = getPrismicClient();
 
+ 
   const response = await prismic.query(
-    [Prismic.predicates.at("document.type", "publication")],
+    [Prismic.predicates.at("document.type", "posts")],
     {
-      fetch: ["publication.title", "publication.content"],
+      fetch: ["posts.title", "posts.content"],
       pageSize: 100,
     }
   );
-
+  
   const posts = response.results.map((post) => {
     return {
       slug: post.id,
