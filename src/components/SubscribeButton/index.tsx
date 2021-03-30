@@ -23,22 +23,22 @@ export function SubScribeButton({ priceId }: SubscribeButtonProps) {
       signIn("github");
       return;
     }
-    /*  
+/*
     if (session.activeSubscription) {
       router.push("/posts");
       return;
-    }*/
-
+    }
+*/
     try {
       console.log("subscribe:::: Vai chamar a rota");
       const response = await api.post("/subscribe");
       //console.log("subscribe:::: passou do banckend", response.data);
-      //const { sessionId } = response.data;
+      const { sessionId } = response.data;
 
-      //const stripe = await getStripeJs();
-    //  console.log("stripe", stripe);
+      const stripe = await getStripeJs();
+        console.log("stripe", stripe);
 
-     // await stripe.redirectToCheckout({ sessionId });
+      await stripe.redirectToCheckout({ sessionId });
     } catch (error) {
       alert(error.message);
     }

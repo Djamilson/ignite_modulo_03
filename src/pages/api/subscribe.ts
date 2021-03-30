@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
 import { query as q } from "faunadb";
-import { getSession, useSession } from "next-auth/client";
+import { getSession } from "next-auth/client";
 
 import { fauna } from "../../services/fauna";
 
@@ -17,13 +17,10 @@ type User = {
 };
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
- const session = await getSession({ req });
-
- console.log("cheogu:::: Entrou no if::", session);
-
   if (req.method === "POST") {
-   
-    console.log("=>", req);
+    const session = await getSession({ req });
+    console.log("cheogu:::: Entrou no if::", session.user);
+
     const user = await fauna.query<User>(
       q.Get(q.Match(q.Index("user_by_email"), q.Casefold(session.user.email)))
     );
@@ -34,7 +31,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       const stripeCustomer = await stripe.customers.create({
         email: session.user.email,
       });
-      console.log("===>>>Passou:: 0");
+      console.log("===>>>Passou:: stripeCustomer", stripeCustomer);
       await fauna.query(
         q.Update(q.Ref(q.Collection("users"), user.ref.id), {
           data: {
@@ -46,6 +43,24 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       customerId = stripeCustomer.id;
     }
     console.log("===>>>Passou::2");
+    /*
+    const stripeCheckoutSession = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: customerId,
+      payment_method_types: ["card"],
+      billing_address_collection: "required",
+      line_items: [
+        {
+          price: "price_1IaSjVHz4MB8xBZfzflYPigY",
+          // For metered billing, do not pass quantity
+          quantity: 1,
+        },
+      ],
+      allow_promotion_codes: true,
+      success_url: process.env.STRIPE_SUCCESS_URL,
+      cancel_url: process.env.STRIPE_CANCEL_URL,
+    });*/
+
     const stripeCheckoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ["card"],
@@ -62,10 +77,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       cancel_url: process.env.STRIPE_CANCEL_URL,
     });
 
-    console.log("===>>>Passou::");
-    return res.status(200).json({ sessionId: stripeCheckoutSession.id });
 
-   // return res.status(200).json({ te: true });
+    return res.status(200).json({ sessionId: stripeCheckoutSession.id });
   } else {
     res.setHeader("Allow", "POST");
     res.status(405).end("Method not allowed");
