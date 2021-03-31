@@ -32,7 +32,7 @@ export function SubScribeButton({ priceId }: SubscribeButtonProps) {
     try {
       console.log("subscribe:::: Vai chamar a rota");
       const response = await api.post("/subscribe");
-      //console.log("subscribe:::: passou do banckend", response.data);
+      console.log("Chegou onde eu queria subscribe:::: passou do banckend", response.data);
       const { sessionId } = response.data;
 
       const stripe = await getStripeJs();
@@ -40,6 +40,7 @@ export function SubScribeButton({ priceId }: SubscribeButtonProps) {
 
       await stripe.redirectToCheckout({ sessionId });
     } catch (error) {
+      console.log("Myyroo suuuuu:", error)
       alert(error.message);
     }
   }

@@ -4,6 +4,7 @@ import { Readable } from "stream";
 import Stripe from "stripe";
 import { stripe } from "../../services/stripe";
 import { saveSubscription } from "./_lib/manageSubscription";
+
 async function buffer(readable: Readable) {
   const chunks = [];
   for await (const chunk of readable) {
@@ -26,9 +27,10 @@ const relevantEvents = new Set([
 ]);
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
+ console.log("Fazendo a scrição =>>");
   if (req.method === "POST") {
     const buf = await buffer(req);
-
+   
     const secret = req.headers["stripe-signature"];
 
     let event: Stripe.Event;
@@ -40,6 +42,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         process.env.STRIPE_WEBHOOK_SECRET
       );
     } catch (err) {
+      console.log("Webhook error Stripe", err);
       return res.status(400).send(`Webhook error Stripe: ${err.message} `);
     }
 
@@ -74,12 +77,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             throw new Error("Unhandled event.");
         }
       } catch (err) {
+        console.log("Webhook error Stripe 02", err);
         return res.json({ error: "Webhook handle failed." });
       }
     }
 
     res.json({ received: true });
   } else {
+    console.log("Webhook error Stripe error:::");
     res.setHeader("Allow", "POST");
     res.status(405).end("Method not allowed");
   }

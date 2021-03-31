@@ -19,19 +19,19 @@ type User = {
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === "POST") {
     const session = await getSession({ req });
-    console.log("cheogu:::: Entrou no if::", session.user);
-
+  
+     console.log("===>>>Passou:: 000122 user", session.user);
     const user = await fauna.query<User>(
       q.Get(q.Match(q.Index("user_by_email"), q.Casefold(session.user.email)))
     );
-    console.log("===>>>Passou:: 000");
+    console.log("===>>>Passou:: 000 user", user);
     let customerId = user.data.stripe_customer_id;
 
     if (!customerId) {
       const stripeCustomer = await stripe.customers.create({
         email: session.user.email,
       });
-      console.log("===>>>Passou:: stripeCustomer", stripeCustomer);
+      console.log("===>>>Passou:: stripeCustomer", stripeCustomer.id);
       await fauna.query(
         q.Update(q.Ref(q.Collection("users"), user.ref.id), {
           data: {
@@ -42,24 +42,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
       customerId = stripeCustomer.id;
     }
-    console.log("===>>>Passou::2");
-    /*
-    const stripeCheckoutSession = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      customer: customerId,
-      payment_method_types: ["card"],
-      billing_address_collection: "required",
-      line_items: [
-        {
-          price: "price_1IaSjVHz4MB8xBZfzflYPigY",
-          // For metered billing, do not pass quantity
-          quantity: 1,
-        },
-      ],
-      allow_promotion_codes: true,
-      success_url: process.env.STRIPE_SUCCESS_URL,
-      cancel_url: process.env.STRIPE_CANCEL_URL,
-    });*/
+    console.log("===>>>Passou::2", customerId);
 
     const stripeCheckoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -77,6 +60,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       cancel_url: process.env.STRIPE_CANCEL_URL,
     });
 
+    console.log("===>>>SubScribe::03", stripeCheckoutSession);
+    console.log("===>>>SubScribe::ID da Sessão", stripeCheckoutSession.id);
 
     return res.status(200).json({ sessionId: stripeCheckoutSession.id });
   } else {

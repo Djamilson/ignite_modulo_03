@@ -38,7 +38,29 @@ export default NextAuth({
 
     async session(session) {
       try {
-        const userActiveSubscription = await fauna.query(
+
+     const userActiveSubscription = await fauna.query(
+       q.Paginate(
+         q.Intersection(
+           q.Match(
+             q.Index("subscription_by_user_ref"),
+             q.Select(
+               "ref",
+               q.Get(
+                 q.Match(
+                   q.Index("user_by_email"),
+                   q.Casefold(session.user.email)
+                 )
+               )
+             )
+           ),
+           q.Match(q.Index("subscription_by_status"), "active")
+         )
+       )
+     );
+          
+        
+       /* const userActiveSubscription = await fauna.query(
           q.Get(
             q.Intersection([
               q.Match(
@@ -56,11 +78,15 @@ export default NextAuth({
               q.Match(q.Index("subscription_by_status"), "active"),
             ])
           )
-        );
-
+        );*/
+console.log("userActiveSubscription if::", userActiveSubscription);
+        console.log("Sesssion if::", session);
+        
         return { ...session, activeSubscription: userActiveSubscription };
-      } catch {
-        console.log("Entrou no else")
+        //return session
+      } catch (error) {
+        console.log("Error na sessão::::", error);
+        console.log("Entrou no else");
         return { ...session, activeSubscription: null };
       }
     },
